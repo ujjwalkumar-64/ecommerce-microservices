@@ -6,6 +6,9 @@ services:
       POSTGRES_USER: ujjwal
       POSTGRES_PASSWORD: ujjwal
       PGDATA: /data/postgres
+      TZ: UTC
+
+
     volumes:
       - postgres:/data/postgres
     ports:
@@ -21,6 +24,8 @@ services:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-pgadmin@pgadmin.org}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-pgadmin}
       PGADMIN_CONFIG_SERVER_MODE: 'False'
+      TZ: UTC
+
     volumes:
       - pgadmin:/var/lib/pgadmin
     ports:

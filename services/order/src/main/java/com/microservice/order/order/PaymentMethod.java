@@ -1,0 +1,13 @@
+package com.microservice.order.order;
+
+
+public enum PaymentMethod {
+    PAYPAL,
+    VISA,
+    CREDIT_CARD,
+    DEBIT_CARD,
+    MASTER_CARD,
+    BITCOIN,
+    COD
+
+}

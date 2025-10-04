@@ -14,4 +14,14 @@ public class OrderMapper {
                  .build();
 
     }
+
+    public OrderResponse fromOrder(Order order) {
+        return  OrderResponse.builder()
+                .id(order.getId())
+                .customerId(order.getCustomerId())
+                .reference(order.getReference())
+                .totalAmount(order.getTotalAmount())
+                .paymentMethod(order.getPaymentMethod())
+                .build();
+    }
 }

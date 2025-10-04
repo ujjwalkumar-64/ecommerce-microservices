@@ -8,8 +8,12 @@ import com.microservice.order.orderline.OrderLineRequest;
 import com.microservice.order.orderline.OrderLineService;
 import com.microservice.order.product.ProductClient;
 import com.microservice.order.product.PurchaseRequest;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.PathVariable;
+
+import java.util.List;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -68,7 +72,30 @@ public class OrderServiceImpl implements OrderService {
                         purchaseProducts
                 )
         );
-        return null;
+        return new OrderResponse(
+                order.getId(),
+                orderRequest.reference(),
+                order.getTotalAmount(),
+                orderRequest.paymentMethod(),
+                customer.id()
+        );
+    }
+
+    @Override
+    public List<OrderResponse> findAllOrders(){
+         return orderRepository.findAll()
+                 .stream()
+                 .map(orderMapper ::fromOrder)
+                 .toList();
+
+    }
+
+    @Override
+    public OrderResponse findOrderById(Integer orderId) {
+         return orderRepository.findById(orderId)
+                 .map(orderMapper::fromOrder)
+                 .orElseThrow(()-> new EntityNotFoundException("order not found with id :: " + orderId));
+
     }
 
 }

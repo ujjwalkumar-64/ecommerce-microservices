@@ -2,6 +2,8 @@ package com.microservice.order.order;
 
 import com.microservice.order.customer.CustomerClient;
 import com.microservice.order.exception.BusinessException;
+import com.microservice.order.kafka.OrderConfirmation;
+import com.microservice.order.kafka.OrderProducer;
 import com.microservice.order.orderline.OrderLineRequest;
 import com.microservice.order.orderline.OrderLineService;
 import com.microservice.order.product.ProductClient;
@@ -25,6 +27,9 @@ public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderLineService orderLineService;
+
+    @Autowired
+    private OrderProducer orderProducer;
 
     @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
@@ -53,8 +58,16 @@ public class OrderServiceImpl implements OrderService {
         // step 5: start payment process
         // todo setup payment
 
-        // step 6: send order confirmation -- kafka use\
-        // todo setup notification and kafka
+        // step 6: send order confirmation to notification ms -- kafka use
+        orderProducer.sendOrderConfirmation(
+                new OrderConfirmation(
+                        orderRequest.reference(),
+                        orderRequest.totalAmount(),
+                        orderRequest.paymentMethod(),
+                        customer,
+                        purchaseProducts
+                )
+        );
         return null;
     }
 

@@ -43,7 +43,7 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
         // step 1: check customer -- openfeign use
-        var customer= customerClient.findCustomerById(orderRequest.customerId())
+        var customer = customerClient.findCustomerById(orderRequest.customerId())
                 .orElseThrow(()-> new BusinessException("cannot create order :: customer not found with id :: " + orderRequest.customerId()));
 
         // step 2: purchase the product -- restTemplate use
@@ -65,13 +65,15 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // step 5: start payment process
-        paymentClient.createPayment(new PaymentRequest(
-                orderRequest.totalAmount(),
-                orderRequest.paymentMethod(),
-                order.getId(),
-                order.getReference(),
-                customer
-        ));
+        paymentClient.createPayment( PaymentRequest.builder()
+                        .OrderReference(order.getReference())
+                        .amount(orderRequest.totalAmount())
+                        .orderId(order.getId())
+                        .customer( customer )
+                        .paymentMethod(order.getPaymentMethod())
+                        .build()
+
+        );
 
         // step 6: send order confirmation to kafka ms -- kafka use
         orderProducer.sendOrderConfirmation(

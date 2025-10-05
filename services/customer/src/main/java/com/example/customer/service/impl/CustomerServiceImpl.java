@@ -60,7 +60,8 @@ public class CustomerServiceImpl implements CustomerService {
 
     @Override
     public CustomerResponse findCustomerById(String id) {
-        return customerRepository.findById(id).map(customerMapper::fromCustomer).orElseThrow(()-> new CustomerNotFoundException("cannot find customer :: " + id));
+        return  customerRepository.findById(id).map(customerMapper::fromCustomer).orElseThrow(()-> new CustomerNotFoundException("cannot find customer :: " + id));
+
     }
 
     @Override

@@ -62,7 +62,7 @@ public class OrderServiceImpl implements OrderService {
         // step 5: start payment process
         // todo setup payment
 
-        // step 6: send order confirmation to notification ms -- kafka use
+        // step 6: send order confirmation to kafka ms -- kafka use
         orderProducer.sendOrderConfirmation(
                 new OrderConfirmation(
                         orderRequest.reference(),

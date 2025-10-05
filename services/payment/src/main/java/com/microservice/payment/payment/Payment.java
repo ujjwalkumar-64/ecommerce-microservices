@@ -1,38 +1,29 @@
-package com.microservice.order.order;
+package com.microservice.payment.payment;
 
-import com.microservice.order.orderline.OrderLine;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
+@Entity
+@Builder
 @AllArgsConstructor
 @NoArgsConstructor
-@Builder
 @Getter
 @Setter
-@Entity
-@EntityListeners(AuditingEntityListener.class)
-@Table(name = "customer_order")
-public class Order {
+public class Payment {
     @Id
     @GeneratedValue
     private Integer id;
-    private String reference;
-    private BigDecimal totalAmount;
+    private BigDecimal amount;
 
     @Enumerated(EnumType.STRING)
     private PaymentMethod paymentMethod;
 
-    private String customerId;
-
-    @OneToMany(mappedBy = "order")
-    private List<OrderLine> orderLines;
+    private Integer orderId;
 
     @CreatedDate
     @Column(nullable = false, updatable = false)

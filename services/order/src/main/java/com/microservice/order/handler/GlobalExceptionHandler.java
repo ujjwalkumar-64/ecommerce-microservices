@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 
+import static org.springframework.http.HttpStatus.BAD_REQUEST;
+
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
@@ -28,16 +30,17 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> methodArgumentNotValidException(MethodArgumentNotValidException ex)
-    {
+    public ResponseEntity<ErrorResponse>  methodArgumentNotValidExceptionHandler(MethodArgumentNotValidException ex) {
         var errors = new HashMap<String, String>();
-        ex.getBindingResult().getAllErrors().forEach((error) -> {
-            var fieldName= ((FieldError) error).getField();
-            var  errorMessage = error.getDefaultMessage();
-            errors.put(fieldName,errorMessage);
-        });
+        ex.getBindingResult().getAllErrors()
+                .forEach(error -> {
+                    var fieldName = ((FieldError) error).getField();
+                    var errorMessage = error.getDefaultMessage();
+                    errors.put(fieldName, errorMessage);
+                });
+
         return ResponseEntity
-                .status(HttpStatus.BAD_REQUEST)
+                .status(BAD_REQUEST)
                 .body(new ErrorResponse(errors));
     }
 }

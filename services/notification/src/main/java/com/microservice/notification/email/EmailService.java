@@ -90,7 +90,7 @@ public class EmailService {
                 UTF_8.name()
         );
 
-        messageHelper.setFrom(destinationEmail);
+        messageHelper.setFrom("devProject3064@gmail.com");
         final String templateName = ORDER_CONFIRMATION.getTemplate();
 
         Map<String,Object> variables = new HashMap<>();

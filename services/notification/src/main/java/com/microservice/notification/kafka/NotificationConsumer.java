@@ -19,6 +19,7 @@ import static com.microservice.notification.notification.NotificationType.PAYMEN
 @Service
 @Slf4j
 @RequiredArgsConstructor
+
 public class NotificationConsumer {
 
     private final EmailService emailService;
@@ -26,7 +27,7 @@ public class NotificationConsumer {
     private final NotificationRepository notificationRepository;
 
     @KafkaListener(topics = "order-topic")
-    public void consumeOrderConfirmationNotification(OrderConfirmation orderConfirmation) throws MessagingException {
+    public void consumeOrderConfirmationNotification(OrderConfirmation orderConfirmation)  {
         log.info("Consume message from order-topic :: {}", orderConfirmation);
         notificationRepository.save(
                 Notification.builder()
@@ -38,14 +39,20 @@ public class NotificationConsumer {
 
         var customerName= orderConfirmation.customer().firstName() + " " + orderConfirmation.customer().lastName();
 
-        emailService.sendOrderConfirmationEmail(
-                orderConfirmation.customer().email(),
-                customerName,
-                orderConfirmation.totalAmount(),
-                orderConfirmation.orderReference(),
-                orderConfirmation.products()
+        try{
+            emailService.sendOrderConfirmationEmail(
+                    orderConfirmation.customer().email(),
+                    customerName,
+                    orderConfirmation.totalAmount(),
+                    orderConfirmation.orderReference(),
+                    orderConfirmation.products()
 
-        );
+            );
+        }
+        catch (MessagingException e){
+            log.warn("Error while sending order confirmation email :: {}", orderConfirmation);
+        }
+
 
     }
 
@@ -62,12 +69,18 @@ public class NotificationConsumer {
 
         var customerName = paymentConfirmation.customerFirstName()+" "+paymentConfirmation.customerLastName();
 
-        emailService.sendPaymentSuccessEmail(
-                paymentConfirmation.customerEmail(),
-                customerName,
-                paymentConfirmation.amount(),
-                paymentConfirmation.orderReference()
+        try{
+            emailService.sendPaymentSuccessEmail(
+                    paymentConfirmation.customerEmail(),
+                    customerName,
+                    paymentConfirmation.amount(),
+                    paymentConfirmation.orderReference()
 
-        );
+            );
+        }
+        catch (MessagingException e){
+            log.warn("Error while sending payment success email :: {}", paymentConfirmation);
+        }
+
     }
 }

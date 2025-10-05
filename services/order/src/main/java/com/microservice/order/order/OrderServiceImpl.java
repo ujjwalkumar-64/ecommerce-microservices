@@ -6,6 +6,8 @@ import com.microservice.order.kafka.OrderConfirmation;
 import com.microservice.order.kafka.OrderProducer;
 import com.microservice.order.orderline.OrderLineRequest;
 import com.microservice.order.orderline.OrderLineService;
+import com.microservice.order.payment.PaymentClient;
+import com.microservice.order.payment.PaymentRequest;
 import com.microservice.order.product.ProductClient;
 import com.microservice.order.product.PurchaseRequest;
 import jakarta.persistence.EntityNotFoundException;
@@ -35,6 +37,9 @@ public class OrderServiceImpl implements OrderService {
     @Autowired
     private OrderProducer orderProducer;
 
+    @Autowired
+    private PaymentClient paymentClient;
+
     @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
         // step 1: check customer -- openfeign use
@@ -60,7 +65,13 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // step 5: start payment process
-        // todo setup payment
+        paymentClient.createPayment(new PaymentRequest(
+                orderRequest.totalAmount(),
+                orderRequest.paymentMethod(),
+                order.getId(),
+                order.getReference(),
+                customer
+        ));
 
         // step 6: send order confirmation to kafka ms -- kafka use
         orderProducer.sendOrderConfirmation(
@@ -72,6 +83,7 @@ public class OrderServiceImpl implements OrderService {
                         purchaseProducts
                 )
         );
+
         return new OrderResponse(
                 order.getId(),
                 orderRequest.reference(),

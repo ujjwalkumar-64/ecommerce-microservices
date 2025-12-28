@@ -18,7 +18,10 @@ spring:
       properties:
         spring.json.trusted.packages: com.microservice.order,com.microservice.payment
         spring.json.type.mapping: orderConfirmation:com.microservice.notification.kafka.order.OrderConfirmation,paymentNotificationRequest:com.microservice.notification.kafka.payment.PaymentConfirmation
-
+    template:
+        observation-enabled: true
+    listener:
+        observation-enabled: true
   mail:
     host: localhost
     port: 1025

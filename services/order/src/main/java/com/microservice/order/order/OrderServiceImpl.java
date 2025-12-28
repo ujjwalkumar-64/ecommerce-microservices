@@ -1,21 +1,24 @@
 package com.microservice.order.order;
 
 import com.microservice.order.customer.CustomerClient;
+import com.microservice.order.customer.CustomerResponse;
 import com.microservice.order.exception.BusinessException;
 import com.microservice.order.kafka.OrderConfirmation;
 import com.microservice.order.kafka.OrderProducer;
+import com.microservice.order.kafka.PaymentProducer;
 import com.microservice.order.orderline.OrderLineRequest;
 import com.microservice.order.orderline.OrderLineService;
 import com.microservice.order.payment.PaymentClient;
 import com.microservice.order.payment.PaymentRequest;
 import com.microservice.order.product.ProductClient;
 import com.microservice.order.product.PurchaseRequest;
+import com.microservice.order.product.PurchaseResponse;
 import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @Service
 public class OrderServiceImpl implements OrderService {
@@ -38,16 +41,29 @@ public class OrderServiceImpl implements OrderService {
     private OrderProducer orderProducer;
 
     @Autowired
+    private PaymentProducer paymentProducer;
+
+    @Autowired
     private PaymentClient paymentClient;
 
     @Override
     public OrderResponse createOrder(OrderRequest orderRequest) {
-        // step 1: check customer -- openfeign use
-        var customer = customerClient.findCustomerById(orderRequest.customerId())
-                .orElseThrow(()-> new BusinessException("cannot create order :: customer not found with id :: " + orderRequest.customerId()));
+        // step 1: check customer -- openfeign use -- and parallel way
+        CompletableFuture<CustomerResponse> customerFuture= CompletableFuture.supplyAsync(
+                ()-> customerClient.findCustomerById(orderRequest.customerId())
+                .orElseThrow(()-> new BusinessException("cannot create order :: customer not found with id :: " + orderRequest.customerId()))
+        );
 
-        // step 2: purchase the product -- restTemplate use
-         var purchaseProducts = productClient.purchaseProducts(orderRequest.products());
+        // step 2: purchase the product -- restTemplate use  --- and parallel way
+        CompletableFuture<List<PurchaseResponse>> purchaseProductsFuture = CompletableFuture.supplyAsync(
+                ()-> productClient.purchaseProducts(orderRequest.products())
+        );
+
+        // wait for both
+        CompletableFuture.allOf(customerFuture, purchaseProductsFuture).join();
+
+        var customer= customerFuture.join();
+        var purchaseProducts= purchaseProductsFuture.join();
 
         // step 3: order persist
         var order = orderRepository.save(orderMapper.toOrder(orderRequest));
@@ -65,15 +81,16 @@ public class OrderServiceImpl implements OrderService {
         }
 
         // step 5: start payment process
-        paymentClient.createPayment( PaymentRequest.builder()
-                        .OrderReference(order.getReference())
-                        .amount(orderRequest.totalAmount())
-                        .orderId(order.getId())
-                        .customer( customer )
-                        .paymentMethod(order.getPaymentMethod())
-                        .build()
-
+        paymentProducer.sendPaymentRequest(
+                new PaymentRequest(
+                        order.getId(),
+                        orderRequest.totalAmount(),
+                        order.getPaymentMethod(),
+                        customer,
+                        order.getReference()
+                )
         );
+
 
         // step 6: send order confirmation to kafka ms -- kafka use
         orderProducer.sendOrderConfirmation(
